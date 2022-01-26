@@ -25,9 +25,11 @@
   (query-value db "SELECT score FROM clubs WHERE name = ?" _name))
 (define (club-insert! _name _score)
   (query-exec db "INSERT INTO clubs VALUES (?, ?)" _name _score))
+
 ;(struct record (id club comment result))
 (define (record-*-byclub _club)
   (query-value db "SELECT * FROM records WHERE club = ?" _club))
 (define (record-insert! _club _comment _result)
   (query-exec db "INSERT INTO records (club, comment, result) VALUES (?, ?, ?)" _club _comment _result))
 
+(provide (all-defined-out))
