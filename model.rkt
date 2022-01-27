@@ -17,6 +17,10 @@
 ;(struct user (name club password)) ;password is hashed
 (define (user-club name)
   (query-maybe-value db "SELECT club FROM users WHERE name = ?" name))
+(define (user-get name club)
+  (if (eq? name "")
+  (query-maybe-value db "SELECT name, club FROM users WHERE club LIKE %?%" club)
+  (query-maybe-value db "SELECT name, club FROM users WHERE name = ? AND  club LIKE %?%" name club)))
 (define (user-password name)
   (query-maybe-value db "SELECT password FROM users WHERE name = ?" name))
 (define (user-insert! name club password)
@@ -24,7 +28,6 @@
 (define (user-rename! name newname)
   (query-exec db "UPDATE users SET name=? WHERE name=?" newname name))
 (define (user-all) (query-list db "SELECT name, club FROM users"))
-(define (user-*-byclub club) (query-list db "SELECT name, club FROM users WHERE club LIKE %?%" club))
 (define (user-repassword! name password)
   (query-exec db "UPDATE users SET password=? WHERE name=?" password name))
 (define (user-delete! name)
