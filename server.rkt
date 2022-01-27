@@ -16,7 +16,7 @@
 
 
 (define (base title body)
-  `(html (head (meta (charset "UTF-8"))
+  `(html (head (meta ((charset "UTF-8")))
                (title ,(string-append title " - RDFZ社联查分系统")))
          ,body))
 
@@ -120,4 +120,7 @@
   (send/suspend/dispatch render-query))
 
 ;run
-;(serve/servlet homepage)
+(serve/servlet homepage)
+
+;init
+;(user-insert! "minister" "admin" (pwhash 'scrypt (string->bytes/utf-8 "123456") `((ln , (inexact->exact (+ 1 (round (* (random) 10))))))))
