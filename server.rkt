@@ -8,6 +8,7 @@
 
 (require "model.rkt")
 
+
 (require crypto)
 (require crypto/all)
 (use-all-factories!)
@@ -41,7 +42,7 @@
   (define (render-admin embed/url)
     (if (eq? (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400)) "admin")
         (response/xexpr (base "管理面板" `(body (h1 "管理面板")
-                                            (h2)
+                                            (h2 "用户")
                                             )))
         (response/xexpr (base "您不是管理员" `(body (h1 "您不是管理员") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页"))))
         )
@@ -49,7 +50,7 @@
   (send/suspend/dispatch render-admin)
   )
 
-(define user-panel ())
+(define (query) '())
 
 (define (start request)
   '())
