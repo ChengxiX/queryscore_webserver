@@ -1,6 +1,7 @@
 #lang racket
 (require db)
 
+(define PATH (current-directory-for-user)) ;can be set manually
 
 (define (init-db! home)
   (define db (sqlite3-connect #:database home #:mode 'create))
@@ -10,7 +11,8 @@
     (query-exec db "CREATE TABLE clubs (name TEXT PRIMARY KEY, score INTEGER)"))
   (unless (table-exists? db "records")
     (query-exec db "CREATE TABLE records (id INTEGER PRIMARY KEY AUTOINCREMENT, club TEXT, comment TEXT, result INTEGER)"))
-  )
+  db)
+(define db (init-db! (build-path PATH "database.sqlite")))
 
 ;(struct user (name club password)) ;password is hashed
 (define (user-club _name)
