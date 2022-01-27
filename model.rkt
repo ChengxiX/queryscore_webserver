@@ -32,6 +32,8 @@
   (query-exec db "UPDATE users SET password=? WHERE name=?" password name))
 (define (user-delete! name)
   (query-exec db "DELETE FROM users WHERE name=?" name))
+(define (user-reclub! name club)
+  (query-exec db "UPDATE users SET club=? WHERE name=?" club name))
 
 
 
