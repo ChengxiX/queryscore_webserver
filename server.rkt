@@ -27,7 +27,7 @@
 
 (define (login request)
   (define (render-login embed/url)
-    (let ((id (request-id-cookie request #:name "identity" #:key secret-salt)))
+    (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400)))
       (if id
           (response/xexpr `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (eq? (user-club id) "admin") admin query)))))))))
           (match (request->basic-credentials request)
@@ -39,8 +39,10 @@
 
 (define (admin request)
   (define (render-admin embed/url)
-    (if (eq? (user-club (request-id-cookie request #:name "identity" #:key secret-salt)) "admin")
-        (response/xexpr (base "管理面板" ))
+    (if (eq? (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400)) "admin")
+        (response/xexpr (base "管理面板" `(body (h1 "管理面板")
+                                            ()
+                                            )))
         (response/xexpr (base "您不是管理员" `(body (h1 "您不是管理员") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页"))))
         )
     )
