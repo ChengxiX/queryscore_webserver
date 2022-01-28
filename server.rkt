@@ -132,17 +132,13 @@
 (define (query request)
   (define (render-query embed/url)
     (define id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400))
-    (if id
+    (if id 
         (response/xexpr (base "社团详细" `(body (a ((href ,(embed/url logout))) "登出") (h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(number->string (club-score club))) ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res))))) (string-split (user-club id) "/")))))
-        (response/xexpr (base "无权限" `(body (h1 "无权限") (p "您未登录") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页")))))
-    )
+        (response/xexpr (base "无权限" `(body (h1 "无权限") (p "您未登录") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页"))))))
   (send/suspend/dispatch render-query))
 
 ;run
 (serve/servlet homepage)
-
-;test
-;(user-insert! "user233" "/iloveyou/" (pwhash 'scrypt #"123456" `((ln , (inexact->exact (+ 1 (round (* (random) 10))))))))
 
 ;init
 ;(user-insert! "minister" "admin" (pwhash 'scrypt #"123456" `((ln , (inexact->exact (+ 1 (round (* (random) 10))))))))
