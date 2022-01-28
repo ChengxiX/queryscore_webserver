@@ -49,6 +49,7 @@
   (define (render-admin embed/url)
     (after-auth request (lambda (request)
         (response/xexpr (base "管理面板" `(body (h1 "管理面板")
+                                            (a ((href ,(embed/url logout))) "登出")
                                             (h2 "用户")
                                             (form ([action ,(embed/url lambda-get-user)])
                                                   ,@(formlet-display get-user) (input ([type "submit"])))
@@ -122,11 +123,17 @@
 
 (define (table-render-4 cell1 cell2 cell3 cell4) `(table ((border="1")) ,@(map (lambda (a b c d) `(tr(td ,a) (td ,b) (td ,c) (td ,d))) cell1 cell2 cell3 cell4)))
 
+(define (render-logout embed/url) `(a ((href ,(embed/url logout))) "登出"))
+(define (logout request) 
+  (send/suspend/dispatch (lambda (embed/url) (response/xexpr `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url homepage)))))))
+                                                             #:cookies (list (logout-id-cookie "identity"))))))
+
+
 (define (query request)
   (define (render-query embed/url)
     (define id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400))
     (if id
-        (response/xexpr (base "社团详细" `(body (h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(number->string (club-score club))) ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res))))) (string-split (user-club id) "/")))))
+        (response/xexpr (base "社团详细" `(body (a ((href ,(embed/url logout))) "登出") (h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(number->string (club-score club))) ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res))))) (string-split (user-club id) "/")))))
         (response/xexpr (base "无权限" `(body (h1 "无权限") (p "您未登录") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页")))))
     )
   (send/suspend/dispatch render-query))
