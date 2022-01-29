@@ -77,9 +77,9 @@
                                                                                                (table-render (list name) (list res))
                                                                                                ))))))
   (define (lambda-get-club request)
-    (response/xexpr (base "所有社团" `(body (h1 "所有社团")
+    (lambda (request) (response/xexpr (base "所有社团" `(body (h1 "所有社团")
                                                                ,(let ((res (club-all))) (table-render (car res) (map number->string (cdr res))))
-                                                               ))))
+                                                               )))))
   (define (lambda-get-logs request)
     (define-values (club) (formlet-process get-logs request))
                           (response/xexpr (base "查询积分记录结果" `(body (h1 "查询积分记录结果")
@@ -119,12 +119,12 @@
 
 (define (query request)
   (define (render-query embed/url)
-        (response/xexpr (base "社团详细" `(body (h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(string-append "当前积分:" (number->string (club-score club)))) ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res))))) (string-split (user-club
+        (response/xexpr (base "社团详细" `(body (h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(number->string (club-score club))) ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res))))) (string-split (user-club
                                                                                                                                                                                                              (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400)) "/"))))))
   (send/suspend/dispatch render-query))
 
 ;run
-(serve/servlet homepage)
+(serve/servlet homepage #:listen-ip #f #:servlet-path "/")
 
 ;init
 ;(user-insert! "minister" "admin" (pwhash 'scrypt #"123456" `((ln , (inexact->exact (+ 1 (round (* (random) 10))))))))
