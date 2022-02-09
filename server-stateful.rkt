@@ -28,25 +28,23 @@
 (define secret-salt (make-secret-salt/file (build-path PATH "secret-salt.bin")))
 
 (define (login request)
+  (define (login-handler request)
+    (define-values (username password) (formlet-process login-form request))
+    (match (cons username password)
+          [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) realpass) #f))
+                            (send/suspend/dispatch (lambda (embed/url) (response/xexpr `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (equal? (user-club (bytes->string/utf-8 user)) "admin") admin query))))))))
+                                                                                       #:cookies (list (make-id-cookie "identity" (bytes->string/utf-8 user) #:key secret-salt #:max-age 86400)))))]
+          [else (login (redirect/get))])
+    )
   (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400)))
     (if id
         (send/suspend/dispatch (lambda (embed/url) (response/xexpr `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (equal? (user-club id) "admin") admin query)))))))))))
-        (match (request->basic-credentials request)
-          [(cons user pass) #:when (let ((realpass (user-password (bytes->string/utf-8 user)))) (if realpass (pwhash-verify #f pass realpass) #f))
-                            (send/suspend/dispatch (lambda (embed/url) (response/xexpr `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (equal? (user-club (bytes->string/utf-8 user)) "admin") admin query))))))))
-                                                                                       #:cookies (list (make-id-cookie "identity" (bytes->string/utf-8 user) #:key secret-salt #:max-age 86400)))))]
-          [else (response
-                 401 #"Unauthorized" (current-seconds) TEXT/HTML-MIME-TYPE
-                 (list
-                  (make-basic-auth-header
-                   (format "Basic Auth Test: ~a" (gensym))))
-                 void)])
+        (send/suspend/dispatch (lambda (embed/url) (response/xexpr (base "登录" `(body (h1 "登录") (form ([action ,(embed/url login-handler)]) ,@(formlet-display login-form) (input ([type "submit"]))))))))
         )))
 
 (define (admin request)
   (define (render-admin embed/url)
     (response/xexpr (base "管理面板" `(body (h1 "管理面板")
-                                            
                                         (h2 "用户")
                                         (form ([action ,(embed/url lambda-get-user)])
                                               ,@(formlet-display get-user) (input ([type "submit"])))
@@ -66,6 +64,8 @@
                                         (h2 "积分")
                                         (form ([action ,(embed/url lambda-add-log)])
                                               ,@(formlet-display add-log) (input ([type "submit"])))
+                                        (form ([action ,(embed/url add-log-change-lambda)])
+                                              ,@(formlet-display add-log-change) (input ([type "submit"])))
                                         (form ([action ,(embed/url lambda-get-logs)])
                                               ,@(formlet-display get-logs) (input ([type "submit"])))
                                         ))))
@@ -110,6 +110,10 @@
   (define (lambda-add-log request)
     (define-values (name score comment) (formlet-process add-log request))
     (log-insert! name comment score)
+    (admin (redirect/get)))
+  (define (add-log-change-lambda request)
+    (define-values (name score-change comment) (formlet-process add-log-change request))
+    (log-change! name comment score-change)
     (admin (redirect/get)))
   (send/suspend/dispatch render-admin))
 

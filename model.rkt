@@ -70,5 +70,6 @@
 (define (log-insert! club comment result)
   (query-exec db "INSERT INTO logs (club, comment, result) VALUES (?, ?, ?)" club comment result)
   (club-rescore! club result))
-
+(define (log-change! club comment change)
+  (log-insert! club (string-append (number->string change) comment) (+ (club-score club) change)))
 (provide (all-defined-out))

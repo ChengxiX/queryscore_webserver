@@ -62,11 +62,22 @@
                      "备注：" ,{input-string . => . comment}
                      )
                     (values name score comment)))
-
+(define add-log-change (formlet
+                    (div
+                     "更改积分/"
+                     "社团名：" ,{input-string  . => . name}
+                     "分数（增量）：" ,{input-int . => . score-change}
+                     "备注：" ,{input-string . => . comment}
+                     )
+                    (values name score-change comment)))
 (define get-logs (formlet
                     (div
                      "查询积分记录/"
                      "社团：" ,{input-string . => . club}
                      )
                     (values club)))
+(define login-form (formlet (div
+                             "用户名：" ,{input-string . => . username}
+                             "密码：" ,{input-string . => . password})
+                            (values username password)))
 (provide (all-defined-out))
