@@ -1,0 +1,4 @@
+*.bak
+database.sqlite
+secret-salt.bin
+compiled/

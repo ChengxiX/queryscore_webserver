@@ -14,7 +14,7 @@
                      "添加用户/"
                      "用户名：" ,{input-string . => . name}
                      "密码：" ,{input-string . => . password}
-                     "社团（用/分开多个社团，示例club1/club2，只有/为空，admin为管理）：" ,{input-string . => . club}
+                     "社团（用,分开多个社团，示例club1,club2，注意请使用半角逗号，admin为管理组）：" ,{input-string . => . club}
                      )
                     (values name password club)))
 (define update-user (formlet
@@ -23,9 +23,22 @@
                      "原用户名：" ,{input-string . => . name}
                      "新用户名：" ,{input-string . => . newname}
                      "新密码：" ,{input-string . => . password}
-                     "新社团（覆盖，用/分开多个社团，示例club1/club2，只有/为空，admin为管理）：" ,{input-string . => . club}
                      )
-                    (values name newname password club)))
+                    (values name newname password)))
+(define update-user-add-club (formlet
+                    (div
+                     "用户添加到社团/"
+                     "用户名：" ,{input-string . => . user}
+                     "社团" ,{input-string . => . club}
+                     )
+                    (values user club)))
+(define update-user-rm-club (formlet
+                    (div
+                     "用户移出社团/"
+                     "用户名：" ,{input-string . => . user}
+                     "社团" ,{input-string . => . club}
+                     )
+                    (values user club)))
 (define delete-user (formlet
                     (div
                      "删除用户/"

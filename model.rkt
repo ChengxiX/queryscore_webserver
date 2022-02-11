@@ -20,8 +20,8 @@
 ;(struct user2club (user club))
 (define (user-get name club)
   (cond
-    ((and (equal? club "") (equal? name "")) (let ((users-list (query-list db "SELECT name FROM users ORDER BY name"))) (cons users-list (map user-club users-list))))
-    ((equal? club "") (user-club name))
+    ((and (equal? club "") (equal? name "")) (let ((users-list (query-list db "SELECT name FROM users ORDER BY name"))) (cons users-list (map (lambda (user) (string-join (user-club user) ",")) users-list))))
+    ((equal? club "") (let ((res (user-club name))) (cons (make-list (length res) name) res)))
     ((equal? name "") (let ((user-list (club-user club))) (cons (make-list (length user-list) club) user-list)))
     (else (user-get name ""))))
 (define (user-password name)
@@ -35,16 +35,16 @@
   (query-exec db "UPDATE users SET password=? WHERE name=?" password name))
 (define (user-delete! name)
   (query-exec db "DELETE FROM users WHERE name=?" name)
-  (query-exec db "DELETE FROM user2club WHERE name=?" name))
+  (query-exec db "DELETE FROM user2club WHERE user=?" name))
 (define (user-delete-club! name club)
   (query-exec db "DELETE FROM user2club WHERE name=? AND club=?" name club))
 (define (user-add-club! name club)
   (query-exec db "INSERT INTO user2club VALUES (?, ?)" name club))
 
 (define (user-club name)
-  (string-join (query-list db "SELECT club FROM user2club WHERE name = ? ORDER BY" name) ","))
+  (query-list db "SELECT club FROM user2club WHERE user = ? ORDER BY club" name))
 (define (club-user name)
-  (query-list db "SELECT user FROM user2club WHERE club = ? ORDER BY" name))
+  (query-list db "SELECT user FROM user2club WHERE club = ? ORDER BY user" name))
 
 
 ;(struct club (name score))
