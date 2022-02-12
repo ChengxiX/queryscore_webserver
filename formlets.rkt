@@ -96,6 +96,6 @@
                   (values club)))
 (define login-form (formlet (div
                              "用户名：" ,{input-string . => . username}
-                             "密码：" ,{(password-input) . => . password})
+                             "密码：" ,{input-string . => . password})
                             (values username password)))
 (provide (all-defined-out))

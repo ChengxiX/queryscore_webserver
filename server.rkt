@@ -143,6 +143,5 @@
     (response/xexpr (base "社团详细" `(body (h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(string-append "当前积分:" (number->string (club-score club)))) ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res))))) (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400)) )))))
   (send/suspend/dispatch render-query))
 
-;(user-insert! "minister" '("admin") (pwhash 'scrypt #"ADUzm$&Jh8jGJ77RU!" `((ln , (inexact->exact (+ 1 (round (* (random) 10))))))))
 ;run
 (serve/servlet homepage #:command-line? #t #:servlet-path "/" #:port 8080 #:listen-ip #f)
