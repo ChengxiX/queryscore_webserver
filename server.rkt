@@ -91,7 +91,7 @@
                                                                   ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res)))))))))
   (define (call-add-user request)
     (after-auth request (lambda (request) (define-values (name password club) (formlet-process add-user request))
-                          (unless (or (equal? name "") (equal? password "")) (user-insert! name (string-split club ",")) (pwhash 'scrypt (string->bytes/utf-8 password) `((ln , (inexact->exact (+ 1 (round (* (random) 10))))))))
+                          (unless (or (equal? name "") (equal? password "")) (user-insert! name (string-split club ",") (pwhash 'scrypt (string->bytes/utf-8 password) `((ln , (inexact->exact (+ 1 (round (* (random) 10)))))))))
                           (admin (redirect/get)))))
   (define (call-update-user request)
     (after-auth request (lambda (request) (define-values (name newname password) (formlet-process update-user request))
