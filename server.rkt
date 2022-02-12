@@ -126,11 +126,11 @@
                           (admin (redirect/get)))))
   (define (call-add-log request)
     (after-auth request (lambda (request) (define-values (name score comment) (formlet-process add-log request))
-                          (log-insert! name comment score)
+                          (unless (equal? name) (log-insert! name comment score))
                           (admin (redirect/get)))))
   (define (add-log-change-call request)
     (after-auth request (lambda (request) (define-values (name score-change comment) (formlet-process add-log-change request))
-                          (log-change! name comment score-change)
+                          (unless (equal? name) (log-change! name comment score-change))
                           (admin (redirect/get)))))
   (send/suspend/dispatch render-admin))
 
@@ -144,4 +144,4 @@
   (send/suspend/dispatch render-query))
 
 ;run
-(serve/servlet homepage #:command-line? #t #:servlet-path "/" #:port 8080 #:listen-ip #f)
+(serve/servlet homepage #:command-line? #t #:servlet-path "/" #:port 8033 #:listen-ip #f)
