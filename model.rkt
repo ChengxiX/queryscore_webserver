@@ -36,7 +36,7 @@
 (define (user-delete! name)
   (query-exec db "DELETE FROM users WHERE name=?" name)
   (query-exec db "DELETE FROM user2club WHERE user=?" name))
-(define (user-delete-club! name club)
+(define (user-rm-club! name club)
   (query-exec db "DELETE FROM user2club WHERE name=? AND club=?" name club))
 (define (user-add-club! name club)
   (query-exec db "INSERT INTO user2club VALUES (?, ?)" name club))
@@ -60,6 +60,9 @@
 (define (club-rename! name newname)
   (query-exec db "UPDATE clubs SET name=? WHERE name=?" newname name)
   (query-exec db "UPDATE user2club SET club=? WHERE club=?"newname name))
+(define (club-delete! name)
+  (query-exec db "DELETE FROM clubs WHERE name=?" name)
+  (query-exec db "DELETE FROM user2club WHERE club=?" name))
 
 ;(struct log (id club comment result logtime))
 (define (log-*-byclub club)
