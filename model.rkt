@@ -18,12 +18,10 @@
 
 ;(struct user (name password)) and password is hashed
 ;(struct user2club (user club))
-(define (user-get name club)
-  (cond
-    ((and (equal? club "") (equal? name "")) (let ((users-list (query-list db "SELECT name FROM users ORDER BY name"))) (cons users-list (map (lambda (user) (string-join (user-club user) ",")) users-list))))
-    ((equal? club "") (let ((res (user-club name))) (cons (make-list (length res) name) res)))
-    ((equal? name "") (let ((user-list (club-user club))) (cons (make-list (length user-list) club) user-list)))
-    (else (user-get name ""))))
+
+(define (user-get-all name club)
+  (let ((users (query-list db "SELECT name FROM users ORDER BY name"))) (cons users (map (lambda (user) (string-join (user-club user) ",")) users))))
+
 (define (user-password name)
   (query-maybe-value db "SELECT password FROM users WHERE name = ?" name))
 (define (user-insert! name clubs password);get a list of clubs
