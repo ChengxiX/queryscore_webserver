@@ -19,7 +19,7 @@
 ;(struct user (name password)) and password is hashed
 ;(struct user2club (user club))
 
-(define (user-get-all name club)
+(define (user-get-all)
   (let ((users (query-list db "SELECT name FROM users ORDER BY name"))) (cons users (map (lambda (user) (string-join (user-club user) ",")) users))))
 
 (define (user-password name)

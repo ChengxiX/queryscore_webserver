@@ -12,8 +12,8 @@
 (define add-user (formlet
                   (div
                    "添加用户/"
-                   "用户名：" ,{input-string . => . name}
-                   "密码：" ,{input-string . => . password}
+                   (label "用户名：") ,{input-string . => . name}
+                   (label "密码：") ,{input-string . => . password}
                    "社团（用,分开多个社团，示例club1,club2，注意请使用半角逗号，admin为管理组）：" ,{input-string . => . club}
                    )
                   (values name password club)))
@@ -55,7 +55,7 @@
                   (div
                    "添加社团/"
                    "社团名：" ,{input-string . => . name}
-                   "分数：" ,{input-int . => . score}
+                   "分数：" ,{(to-number (to-string (default #"0" (text-input)))) . => . score}
                    )
                   (values name score)))
 (define update-club (formlet
@@ -95,7 +95,8 @@
                    )
                   (values club)))
 (define login-form (formlet (div
-                             "用户名：" ,{input-string . => . username}
-                             "密码：" ,{input-string . => . password})
-                            (values username password)))
+                             (label "用户名：") ,{input-string . => . username}
+                             (label "密码：") ,{(to-string (required (password-input))) . => . password}
+                             (label "自动登录" ,{(to-string (default #"f" (checkbox "t" #t))) . => . rem}))
+                            (values username password rem)))
 (provide (all-defined-out))

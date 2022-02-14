@@ -22,11 +22,11 @@
 (define (base title body)
   `(html (head (meta ((charset "UTF-8")))
   (meta ((name "viewport") (content "width=device-width, initial-scale=1, shrink-to-fit=no")))
-  (link ((rell "stylesheet") (href "https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css") (integrity "sha384-p1KAotb3W9ndluCsqePPYnjRm3c6abdnIjo0tQwYUv83VsbsYd43RuofnFAaDo0E") (crossorigin "anonymous")))
+  (link ((rel "stylesheet") (href "https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.1/css/bootstrap.min.css")))
                (title ,(string-append title " - RDFZ社联在线系统")))
          (body ,@body 
-         (script ((src "https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js") (integrity "sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj") (crossorigin "anonymous")))
-         (script ((src "https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js") (integrity "sha384-E5Sj1saJVFNzWWK3YIJB4LEDEEVEGaOdfmCprPDkfWUo+xkb6Ep52Q1TMEtgcFwi") (crossorigin "anonymous")))
+         (script ((src "https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.slim.js") (integrity "sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj") (crossorigin "anonymous")))
+         (script ((src "https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.1/js/bootstrap.bundle.min.js") (integrity "sha384-E5Sj1saJVFNzWWK3YIJB4LEDEEVEGaOdfmCprPDkfWUo+xkb6Ep52Q1TMEtgcFwi") (crossorigin "anonymous")))
          )))
 
 (define (homepage request)
@@ -38,20 +38,20 @@
 
 (define (login request)
   (define (login-handler request)
-    (define-values (username password) (formlet-process login-form request))
+    (define-values (username password remember?) (formlet-process login-form request))
     (match (cons username password)
       [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) realpass) #f))
                         (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (member "admin" (user-club user)) admin query))))))))
-                                                                                   #:cookies (list (make-id-cookie "identity" user #:key secret-salt #:max-age 86400)))))]
+                                                                                   #:cookies (list (if (equal? remember? "t") (make-id-cookie "identity" user #:key secret-salt #:max-age 604800) (make-id-cookie "identity" user #:key secret-salt))))))]
       [else (login (redirect/get))]))
-  (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400)))
+  (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)))
     (if id
         (if (member "admin" (user-club id)) (admin (redirect/get)) (query (redirect/get)))
         (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "登录" `((h1 "登录") (form ([action ,(embed/url login-handler)]) ,@(formlet-display login-form) (input ([type "submit"]))))))))
         )))
 
 (define (admin request)
-  (define (after-auth request next) (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400))) (if (if id (member "admin" (user-club id)) #f) (next request)
+  (define (after-auth request next) (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))) (if (if id (member "admin" (user-club id)) #f) (next request)
                                                                                                                                        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "无权限" `((h1 "无权限") (p "您不是管理员") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页")))))))))
   (define (render-admin embed/url)
     (response/xexprh5 (base "管理面板" `((h1 "管理面板")
@@ -90,20 +90,20 @@
     (after-auth request (lambda (request) (define-values (name club) (formlet-process get-user request))
                           (response/xexprh5 (base "查询用户结果" `((h1 "查询用户结果")
                                                                 ,(cond 
-                                                                ((and (equal? club "") (equal? name "")) (let ((res user-get-all)) (table-render "用户名" "社团" (car res) (cdr res))))
+                                                                ((and (equal? club "") (equal? name "")) (let ((res (user-get-all))) (table-render "用户名" "社团" (car res) (cdr res))))
                                                                 ((equal? club "") (let ((res (user-club name))) (table-render "用户名" "社团" (make-list (length res) name) res)))
-                                                                ((equal? name "") (let ((res (club-user club))) (table-render "社团" "用户名" (make-list (length user-list) club) res)))
+                                                                ((equal? name "") (let ((res (club-user club))) (table-render "社团" "用户名" (make-list (length res) club) res)))
                                                                 (else (let ((res (user-club name))) (table-render "用户名" "社团" (make-list (length res) name) res)))
                                                                 )
                                                                    ))))))
   (define (call-get-club request)
     (after-auth request (lambda (request) (response/xexprh5 (base "所有社团" `((h1 "所有社团")
-                                                                              ,(let ((res (club-all))) (table-render (car res) (map number->string (cdr res))))
+                                                                              ,(let ((res (club-all))) (table-render "社团" "积分" (car res) (map number->string (cdr res))))
                                                                               ))))))
   (define (call-get-logs request)
     (after-auth request (lambda (request) (define-values (club) (formlet-process get-logs request))
                           (response/xexprh5 (base "查询积分记录结果" `((h1 "查询积分记录结果")
-                                                                  ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res)))))))))
+                                                                  ,(let ((res (log-*-byclub club))) (table-render-4 "社团" "备注" "积分" "记录时间" (first res) (second res) (map number->string (third res)) (fourth res)))))))))
   (define (call-add-user request)
     (after-auth request (lambda (request) (define-values (name password club) (formlet-process add-user request))
                           (unless (or (equal? name "") (equal? password "")) (user-insert! name (string-split club ",") (pwhash 'scrypt (string->bytes/utf-8 password) `((ln , (inexact->exact (+ 1 (round (* (random) 10)))))))))
@@ -149,13 +149,13 @@
                           (admin (redirect/get)))))
   (after-auth request (lambda (request) (send/suspend/dispatch render-admin))))
 
-(define (table-render title1 title2 cell1 cell2) `(table ((border="1")) ,@(map (lambda (a b) `(tr(td ,a) (td ,b))) cell1 cell2)))
+(define (table-render title1 title2 cell1 cell2) `(table ((class "table table-striped table-bordered table-hover table-condensed")) (thead (tr (th ,title1) (th ,title2))) (tbody ,@(map (lambda (a b) `(tr(td ,a) (td ,b))) cell1 cell2))))
 
-(define (table-render-4 cell1 cell2 cell3 cell4) `(table ((border="1")) ,@(map (lambda (a b c d) `(tr(td ,a) (td ,b) (td ,c) (td ,d))) cell1 cell2 cell3 cell4)))
+(define (table-render-4 title1 title2 title3 title4 cell1 cell2 cell3 cell4) `(table ((class "table table-striped table-bordered table-hover table-condensed")) (thead (tr (th ,title1) (th ,title2) (th ,title3) (th ,title4))) (tbody ,@(map (lambda (a b c d) `(tr(td ,a) (td ,b) (td ,c) (td ,d))) cell1 cell2 cell3 cell4))))
 
 (define (query request)
   (define (render-query embed/url)
-    (response/xexprh5 (base "社团详细" `((h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(string-append "当前积分:" (number->string (club-score club)))) ,(let ((res (log-*-byclub club))) (table-render-4 (first res) (second res) (map number->string (third res)) (fourth res))))) (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 86400)) )))))
+    (response/xexprh5 (base "社团详细" `((h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(string-append "当前积分:" (number->string (club-score club)))) ,(let ((res (log-*-byclub club))) (table-render-4 "社团" "备注" "积分" "记录时间" (first res) (second res) (map number->string (third res)) (fourth res))))) (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)) )))))
   (send/suspend/dispatch render-query))
 
 ;run
