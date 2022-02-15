@@ -62,7 +62,7 @@
                   (div
                    (h5 "添加社团")
                    (div ((class "form-group")) (label "社团名：") ,{input-string . => . name})
-                   (div ((class "form-group")) (label "分数：") ,{(to-number (to-string (default #"0" (text-input)))) . => . score})
+                   (div ((class "form-group")) (label "分数：") ,{input-string . => . score})
                    (button ([type "submit"] [class "btn btn-primary"]) "提交")
                    )
                   (values name score)))
@@ -86,7 +86,7 @@
                  (div
                   (h5 "更改积分")
                   (div ((class "form-group")) (label "社团名：") ,{input-string  . => . name})
-                  (div ((class "form-group")) (label "分数（更改为）：") ,{input-int . => . score})
+                  (div ((class "form-group")) (label "分数（更改为）：") ,{input-string . => . score})
                   (div ((class "form-group")) (label "备注：") ,{input-string . => . comment})
                   (button ([type "submit"] [class "btn btn-primary"]) "提交")
                   )
@@ -95,7 +95,7 @@
                         (div
                          (h5 "更改积分")
                          (div ((class "form-group")) (label "社团名：") ,{input-string  . => . name})
-                         (div ((class "form-group")) (label "分数（增量）：") ,{input-int . => . score-change})
+                         (div ((class "form-group")) (label "分数（增量）：") ,{input-string . => . score-change})
                          (div ((class "form-group")) (label "备注：") ,{input-string . => . comment})
                          (button ([type "submit"] [class "btn btn-primary"]) "提交")
                          )
