@@ -31,32 +31,34 @@
 
 (define (homepage request)
   (define (render-homepage embed/url)
-    (response/xexprh5 (base "首页" `((h1 "首页") (p "欢迎使用RDFZ社联在线系统") (a ((href ,(embed/url login))) "登录")))))
+    (response/xexprh5 (base "首页" `((div ((class "container")) (h1 "首页") (p "欢迎使用RDFZ社联在线系统") (a ((href ,(embed/url login))) "登录"))))))
   (send/suspend/dispatch render-homepage))
 
 (define secret-salt (make-secret-salt/file (build-path PATH "secret-salt.bin")))
 
-(define (login request)
+(define (login request #:alert (alert #f))
   (define (login-handler request)
     (define-values (username password remember?) (formlet-process login-form request))
     (match (cons username password)
       [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) realpass) #f))
                         (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (member "admin" (user-club user)) admin query))))))))
                                                                                    #:cookies (list (if (equal? remember? "t") (make-id-cookie "identity" user #:key secret-salt #:max-age 604800) (make-id-cookie "identity" user #:key secret-salt))))))]
-      [else (login (redirect/get))]))
+      [else (login (redirect/get) #:alert '("danger" "错误的用户名或者密码" ""))]))
   (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)))
     (if id
         (if (member "admin" (user-club id)) (admin (redirect/get)) (query (redirect/get)))
-        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "登录" `((div ((class "container")) (h1 "登录") (form ([action ,(embed/url login-handler)]) ,@(formlet-display login-form))))))))
+        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "登录" `((div ((class "container")) (h1 "登录") 
+          ,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
+        (form ([action ,(embed/url login-handler)]) ,@(formlet-display login-form))))))))
         )))
 
-(define (admin request #:alert (callback #f)) ;callback is a test
+(define (admin request #:alert (alert #f))
   (define (after-auth request next) (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))) (if (if id (member "admin" (user-club id)) #f) (next request)
                                                                                                                                        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "无权限" `((h1 "无权限") (p "您不是管理员") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页")))))))))
   (define (render-admin embed/url)
     (response/xexprh5 (base "管理面板" `(
       (div ((class "container"))
-      ,(if callback `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first callback)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second callback)) ,(third callback)) "")
+      ,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
       (div ((class "row")) (div ((class "offset-md-2")) (h1 "管理面板")
                                         (h2 "用户")
                                         (form ([action ,(embed/url call-get-user)])
