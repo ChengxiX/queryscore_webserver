@@ -164,7 +164,7 @@
                           )))
   (define (add-log-change-call request)
     (after-auth request (lambda (request) (define-values (name score-change comment) (formlet-process add-log-change request))
-                          (if (or (equal? name "") (equal? score "")) (admin (redirect/get) #:alert '("warning" "警告！" "请输入社团名和分数")) (begin (log-insert! name (string-append score-change "," comment) (+ (club-score club) (string->number score-change))) (admin (redirect/get) #:alert '("success" "成功！" ""))))
+                          (if (or (equal? name "") (equal? score-change "")) (admin (redirect/get) #:alert '("warning" "警告！" "请输入社团名和分数")) (begin (log-insert! name (string-append score-change "," comment) (+ (club-score name) (string->number score-change))) (admin (redirect/get) #:alert '("success" "成功！" ""))))
                           )))
   (after-auth request (lambda (request) (send/suspend/dispatch render-admin))))
 
