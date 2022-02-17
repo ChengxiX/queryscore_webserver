@@ -42,7 +42,7 @@
     (match (cons username password)
       [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) realpass) #f))
                         (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (member "admin" (user-club user)) admin query))))))))
-                                                                                   #:cookies (list (if (equal? remember? "t") (make-id-cookie "identity" user #:key secret-salt #:max-age 604800) (make-id-cookie "identity" user #:key secret-salt))))))]
+                                                                                   #:cookies (list (make-id-cookie "identity" user #:key secret-salt #:max-age (if (equal? remember? "t") 604800 #f))))))]
       [else (login (redirect/get) #:alert '("danger" "错误的用户名或者密码" "如有需要请联系社联"))]))
   (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)))
     (if id
@@ -59,7 +59,7 @@
     (response/xexprh5 (base "管理面板" `(
       (div ((class "container"))
       ,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
-      (h1 "管理面板")
+      (h1 "管理面板") (a ((href ,(embed/url logout))) "登出")
                                         (h2 "用户")
                                         (form ([action ,(embed/url call-get-user)])
                                               ,@(formlet-display get-user) )
@@ -176,8 +176,11 @@
 
 (define (query request)
   (define (render-query embed/url)
-    (response/xexprh5 (base "社团详细" `((div ((class "container"))(h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(string-append "当前积分:" (number->string (club-score club)))) ,(let ((res (log-*-byclub club))) (table-render-4 "社团" "备注" "积分" "记录时间" (first res) (second res) (map number->string (third res)) (fourth res))))) (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))) )))))
+    (response/xexprh5 (base "社团详细" `((div ((class "container"))(h1 "社团详细") (a ((href ,(embed/url logout))) "登出") ,@(map (lambda (club) `(div (h2 ,club) (p ,(string-append "当前积分:" (number->string (club-score club)))) ,(let ((res (log-*-byclub club))) (table-render-4 "社团" "备注" "积分" "记录时间" (first res) (second res) (map number->string (third res)) (fourth res))))) (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))) )))))
   (send/suspend/dispatch render-query))
+
+(define (logout request)
+  (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url homepage))))))) #:cookies (list (logout-id-cookie "identity"))))))
 
 ;run
 (serve/servlet homepage #:command-line? #t #:servlet-path "/" #:port 8080 #:listen-ip #f)
