@@ -43,10 +43,10 @@
       [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) realpass) #f))
                         (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (member "admin" (user-club user)) admin query))))))))
                                                                                    #:cookies (list (if (equal? remember? "t") (make-id-cookie "identity" user #:key secret-salt #:max-age 604800) (make-id-cookie "identity" user #:key secret-salt))))))]
-      [else (login (redirect/get) #:alert '("danger" "错误的用户名或者密码" ""))]))
+      [else (login (redirect/get) #:alert '("danger" "错误的用户名或者密码" "如有需要请联系社联"))]))
   (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)))
     (if id
-        (if (member "admin" (user-club id)) (admin (redirect/get)) (query (redirect/get)))
+        (if (member "admin" (user-club id)) (admin (redirect/get) #:alert `("success" "欢迎回来！" ,id)) (query (redirect/get)))
         (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "登录" `((div ((class "container")) (h1 "登录") 
           ,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
         (form ([action ,(embed/url login-handler)]) ,@(formlet-display login-form))))))))
@@ -59,7 +59,7 @@
     (response/xexprh5 (base "管理面板" `(
       (div ((class "container"))
       ,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
-      (div ((class "row")) (div ((class "offset-md-2")) (h1 "管理面板")
+      (h1 "管理面板")
                                         (h2 "用户")
                                         (form ([action ,(embed/url call-get-user)])
                                               ,@(formlet-display get-user) )
@@ -89,7 +89,7 @@
                                               ,@(formlet-display add-log-change) )
                                         (form ([action ,(embed/url call-get-logs)])
                                               ,@(formlet-display get-logs) )))
-                                        )))))
+                                        )))
   (define (call-get-user request)
     (after-auth request (lambda (request) (define-values (name club) (formlet-process get-user request))
                           (response/xexprh5 (base "查询用户结果" `((h1 "查询用户结果")
