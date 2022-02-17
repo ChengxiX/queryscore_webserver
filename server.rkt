@@ -176,7 +176,7 @@
 
 (define (query request)
   (define (render-query embed/url)
-    (response/xexprh5 (base "社团详细" `((h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(string-append "当前积分:" (number->string (club-score club)))) ,(let ((res (log-*-byclub club))) (table-render-4 "社团" "备注" "积分" "记录时间" (first res) (second res) (map number->string (third res)) (fourth res))))) (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)) )))))
+    (response/xexprh5 (base "社团详细" `((div ((class "container"))(h1 "社团详细") ,@(map (lambda (club) `(div (h2 ,club) (p ,(string-append "当前积分:" (number->string (club-score club)))) ,(let ((res (log-*-byclub club))) (table-render-4 "社团" "备注" "积分" "记录时间" (first res) (second res) (map number->string (third res)) (fourth res))))) (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))) )))))
   (send/suspend/dispatch render-query))
 
 ;run
