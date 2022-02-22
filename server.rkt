@@ -43,7 +43,7 @@
   (define (login-handler request)
     (define-values (username password remember?) (formlet-process login-form request))
     (match (cons username password)
-      [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) realpass) #f))
+      [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) (bytes->string/utf-8 realpass)) #f))
                         (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (member "admin" (user-club user)) admin query))))))))
                                                                                    #:cookies (list (make-id-cookie "identity" user #:key secret-salt #:max-age (if (equal? remember? "t") 604800 #f))))))]
       [else (login (redirect/get) #:alert '("danger" "错误的用户名或者密码" "如有需要请联系社联"))]))
@@ -197,3 +197,4 @@
 
 ;run
 (serve/servlet homepage #:command-line? #t #:servlet-path "/" #:port 8080 #:listen-ip #f)
+(user-insert! "minister" '("admin") (pwhash 'scrypt (string->bytes/utf-8 "580193443") `((ln , (inexact->exact (+ 1 (round (* (random) 10))))))))
