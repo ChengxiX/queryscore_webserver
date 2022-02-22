@@ -1,20 +1,18 @@
 #lang racket
 (require db)
 
-(define PATH (current-directory-for-user)) ;can be set manually
-
-(define (init-db! home)
-  (define db (sqlite3-connect #:database home #:mode 'create))
+(define (init-db!)
+  (define db (mysql-connect #:user "cu" #:password "myweb" #:database "clubunion" #:ssl 'yes))
   (unless (table-exists? db "users")
-    (query-exec db "CREATE TABLE users (name TEXT PRIMARY KEY, password BLOB)"))
+    (query-exec db "CREATE TABLE users(name VARCHAR(64) PRIMARY KEY, password TINYBLOB)"))
   (unless (table-exists? db "clubs")
-    (query-exec db "CREATE TABLE clubs (name TEXT PRIMARY KEY, score INTEGER)"))
+    (query-exec db "CREATE TABLE clubs(name VARCHAR(64) PRIMARY KEY, score INTEGER)"))
   (unless (table-exists? db "changinglogs")
-    (query-exec db "CREATE TABLE changinglogs (id INTEGER PRIMARY KEY AUTOINCREMENT, club TEXT, comment TEXT, result INTEGER, logtime TIMESTAMP default (datetime('now', '+8 hour')))"))
+    (query-exec db "CREATE TABLE changinglogs(id INTEGER AUTO_INCREMENT PRIMARY KEY, club VARCHAR(64), FOREIGN KEY(club) REFERENCES clubs(name), comment TEXT, result INTEGER, logtime TIMESTAMP default CURRENT_TIMESTAMP)"))
   (unless (table-exists? db "user2club")
-    (query-exec db "CREATE TABLE user2club (user TEXT, club TEXT, PRIMARY KEY (user, club))"))
+    (query-exec db "CREATE TABLE user2club(user VARCHAR(64), club VARCHAR(64), FOREIGN KEY(user) REFERENCES users(name), FOREIGN KEY(club) REFERENCES clubs(name), PRIMARY KEY (user, club))"))
   db)
-(define db (init-db! (build-path PATH "database.sqlite")))
+(define db (init-db!))
 
 ;(struct user (name password)) and password is hashed
 ;(struct user2club (user club))

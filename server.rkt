@@ -14,6 +14,9 @@
 (require crypto/all)
 (use-all-factories!)
 
+
+(define PATH (current-directory-for-user)) ;can be set manually
+
 ;更改了全局(response/xexprh5)的行为为html5
 (define (response/xexprh5 xexpr #:code [code 200] #:message [message #f] #:seconds [seconds (current-seconds)] #:mime-type [mime-type TEXT/HTML-MIME-TYPE] #:cookies [cooks empty] #:headers [hdrs empty] #:preamble [preamble #""])
   (response/xexpr xexpr #:code code	#:message message	#:seconds seconds	#:mime-type mime-type	#:headers hdrs	#:cookies cooks #:preamble (bytes-append #"<!DOCTYPE html>" preamble)))
@@ -187,7 +190,7 @@
     )
     )
     )))
-  (if (equal? club-list null) (send/suspend/dispatch (lambda (embed/url) `((h1 "社团详情") (br) (p "您不在任何社团里，如有疑问请练习社联") ,(embed/url logout)))) (send/suspend/dispatch render-query)))
+  (if (equal? club-list null) (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "社团详情" `((h1 "社团详情") (br) (p "您不在任何社团里，如有疑问请练习社联") (a ((href ,(embed/url logout))) "登出")))))) (send/suspend/dispatch render-query)))
 
 (define (logout request)
   (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url homepage))))))) #:cookies (list (logout-id-cookie "identity"))))))

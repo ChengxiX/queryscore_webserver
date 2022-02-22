@@ -2,3 +2,5 @@
 database.sqlite
 secret-salt.bin
 compiled/
+mysql-8.0.28-winx64/
+!/mysql-8.0.28-winx64/my.ini

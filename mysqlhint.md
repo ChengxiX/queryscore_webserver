@@ -1,0 +1,1 @@
+安装好了mysql先设置root密码，然后给'cu'@'localhost'用户密码“myweb”，创建表clubunion并给'cu'@'localhost'权限SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,REFERENCES，再刷新权限。
