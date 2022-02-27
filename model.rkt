@@ -2,7 +2,7 @@
 (require db)
 
 (define (init-db!)
-  (define db (mysql-connect #:user "cu" #:password "myweb" #:database "clubunion" #:ssl 'yes))
+  (define db (mysql-connect #:user "cu" #:password "myweb" #:port 8806 #:database "clubunion" #:ssl 'yes))
   (unless (table-exists? db "users")
     (query-exec db "CREATE TABLE users(name VARCHAR(64) PRIMARY KEY, password TINYBLOB)"))
   (unless (table-exists? db "clubs")
