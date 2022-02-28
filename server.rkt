@@ -196,6 +196,5 @@
   (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url homepage))))))) #:cookies (list (logout-id-cookie "identity"))))))
 
 ;run
+
 (serve/servlet homepage #:command-line? #t #:servlet-path "/" #:port 8080 #:listen-ip #f)
-(when (equal? (club-user "admin") null)
-(user-insert! "minister" '("admin") (pwhash 'scrypt (string->bytes/utf-8 "580193443") `((ln , (inexact->exact (+ 1 (round (* (random) 10)))))))))
