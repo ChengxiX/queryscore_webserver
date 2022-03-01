@@ -15,14 +15,12 @@
     ;(query-exec-safeconnection db "CREATE TABLE user2club(user VARCHAR(64), club VARCHAR(64), FOREIGN KEY(user) REFERENCES users(name), FOREIGN KEY(club) REFERENCES clubs(name), PRIMARY KEY (user, club))"))
   ;db)
 
-(define current-db (make-parameter null))
+(define pool (connection-pool (lambda () (mysql-connect #:user "cu" #:password "j6ChJLUK0F*XCC&&h" #:port 8806 #:database "clubunion" #:ssl 'yes)) #:max-idle-connections 3))
 
-(define (connect) (current-db (mysql-connect #:user "cu" #:password "j6ChJLUK0F*XCC&&h" #:port 8806 #:database "clubunion" #:ssl 'yes)))
-(connect)
 
-(define (query-exec-safeconnection stmt . arg) (with-handlers ([exn:fail:sql? (lambda (exn) (if (connected? (current-db)) (error exn) (connect)) (apply query-exec (cons (current-db) (cons stmt arg))))]) (apply query-exec (cons (current-db) (cons stmt arg)))))
-(define (query-list-safeconnection stmt . arg) (with-handlers ([exn:fail:sql? (lambda (exn) (if (connected? (current-db)) (error exn) (connect)) (apply query-list (cons (current-db) (cons stmt arg))))]) (apply query-list (cons (current-db) (cons stmt arg)))))
-(define (query-maybe-value-safeconnection stmt . arg) (with-handlers ([exn:fail:sql? (lambda (exn) (if (connected? (current-db)) (error exn) (connect)) (apply query-maybe-value (cons (current-db) (cons stmt arg))))]) (apply query-maybe-value (cons (current-db) (cons stmt arg)))))
+(define (query-exec-safeconnection stmt . arg) (apply query-exec (cons (virtual-connection pool) (cons stmt arg))))
+(define (query-list-safeconnection stmt . arg) (apply query-list (cons (virtual-connection pool) (cons stmt arg))))
+(define (query-maybe-value-safeconnection stmt . arg) (apply query-maybe-value (cons (virtual-connection pool) (cons stmt arg))))
 
 
 ;(struct user (name password)) and password is hashed
