@@ -57,6 +57,14 @@
                    (h5 "所有社团")
                    (button ([type "submit"] [class "btn btn-primary"]) "查询")
                    )(values)))
+(define query-club (formlet
+                    (div 
+                     (h5 "查询社团")
+                     (div ((class "form-group")) (label "社团名") ,{input-string . => . name})
+                     (button ([type "submit"] [class "btn btn-primary"]) "提交")
+                     )
+                    (values name)
+                    ))
 
 (define add-club (formlet
                   (div
@@ -108,9 +116,9 @@
                    )
                   (values club)))
 (define login-form (formlet (div ((class "container"))
-                             (div ((class "form-group")) (label "用户名：") ,{input-string . => . username})
-                             (div ((class "form-group")) (label "密码：") ,{(to-string (required (password-input))) . => . password})
-                             (div ((class "form-check")) (label "自动登录" ,{(to-string (default #"f" (checkbox "t" #t))) . => . rem}))
-                             (button ([type "submit"] [class "btn btn-primary"]) "登录"))
+                                 (div ((class "form-group")) (label "用户名：") ,{input-string . => . username})
+                                 (div ((class "form-group")) (label "密码：") ,{(to-string (required (password-input))) . => . password})
+                                 (div ((class "form-check")) (label "自动登录" ,{(to-string (default #"f" (checkbox "t" #t))) . => . rem}))
+                                 (button ([type "submit"] [class "btn btn-primary"]) "登录"))
                             (values username password rem)))
 (provide (all-defined-out))

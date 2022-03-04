@@ -3,19 +3,22 @@
 
 ;(init-db! is outdate)
 ;(define (init-db!)
-  ;(define db (mysql-connect #:user "cu" #:password "myweb" #:port 8806 #:database "clubunion" #:ssl 'yes))
-  ;(unless (table-exists? db "users")
-    ;(query-exec-safeconnection db "CREATE TABLE users(name VARCHAR(64) PRIMARY KEY, password TINYBLOB)"))
-  ;(unless (table-exists? db "clubs")
-    ;(query-exec-safeconnection db "CREATE TABLE clubs(name VARCHAR(64) PRIMARY KEY, score INTEGER)")
-    ;(query-exec-safeconnection db "INSERT INTO clubs VALUES ('admin', ?)" 0))
-  ;(unless (table-exists? db "changinglogs")
-    ;(query-exec-safeconnection db "CREATE TABLE changinglogs(id INTEGER AUTO_INCREMENT PRIMARY KEY, club VARCHAR(64), FOREIGN KEY(club) REFERENCES clubs(name), comment TEXT, result INTEGER, logtime TIMESTAMP default CURRENT_TIMESTAMP)"))
-  ;(unless (table-exists? db "user2club")
-    ;(query-exec-safeconnection db "CREATE TABLE user2club(user VARCHAR(64), club VARCHAR(64), FOREIGN KEY(user) REFERENCES users(name), FOREIGN KEY(club) REFERENCES clubs(name), PRIMARY KEY (user, club))"))
-  ;db)
+;(define db (mysql-connect #:user "cu" #:password "myweb" #:port 8806 #:database "clubunion" #:ssl 'yes))
+;(unless (table-exists? db "users")
+;(query-exec-safeconnection db "CREATE TABLE users(name VARCHAR(64) PRIMARY KEY, password TINYBLOB)"))
+;(unless (table-exists? db "clubs")
+;(query-exec-safeconnection db "CREATE TABLE clubs(name VARCHAR(64) PRIMARY KEY, score INTEGER)")
+;(query-exec-safeconnection db "INSERT INTO clubs VALUES ('admin', ?)" 0))
+;(unless (table-exists? db "changinglogs")
+;(query-exec-safeconnection db "CREATE TABLE changinglogs(id INTEGER AUTO_INCREMENT PRIMARY KEY, club VARCHAR(64), FOREIGN KEY(club) REFERENCES clubs(name), comment TEXT, result INTEGER, logtime TIMESTAMP default CURRENT_TIMESTAMP)"))
+;(unless (table-exists? db "user2club")
+;(query-exec-safeconnection db "CREATE TABLE user2club(user VARCHAR(64), club VARCHAR(64), FOREIGN KEY(user) REFERENCES users(name), FOREIGN KEY(club) REFERENCES clubs(name), PRIMARY KEY (user, club))"))
+;db)
 
-(define pool (connection-pool (lambda () (mysql-connect #:user "cu" #:password "j6ChJLUK0F*XCC&&h" #:port 8806 #:database "clubunion" #:ssl 'yes)) #:max-idle-connections 3))
+(define pool (connection-pool (lambda () (mysql-connect #:user "cu" 
+                                                        ;#:password "j6ChJLUK0F*XCC&&h" #:port 8806 
+                                                        #:password "myweb"
+                                                        #:database "clubunion" #:ssl 'yes)) #:max-idle-connections 3))
 
 
 (define (query-exec-safeconnection stmt . arg) (apply query-exec (cons (virtual-connection pool) (cons stmt arg))))
@@ -28,7 +31,7 @@
 
 (define (user-get-all)
   (let ((users (query-list-safeconnection  "SELECT name FROM users ORDER BY name"))) (cons users (map (lambda (user) (string-join (user-club user) ",")) users))))
-
+(define (user-get-indistinct search) (let ((users (query-list-safeconnection "SELECT name FROM users WHERE name LIKE CONCAT('%', ?, '%')" search))) (cons users (map (lambda (user) (string-join (user-club user) ",")) users))))
 (define (user-password name)
   (query-maybe-value-safeconnection  "SELECT password FROM users WHERE name = ?" name))
 (define (user-insert! name clubs password);get a list of clubs
@@ -55,12 +58,14 @@
 ;(struct club (name score))
 (define (club-score name)
   (query-maybe-value-safeconnection  "SELECT score FROM clubs WHERE name = ?" name))
+(define (club-indistinct name)
+  (query-list-safeconnection "SELECT name FROM clubs WHERE name LIKE CONCAT('%', ?, '%')" name))
 (define (club-rescore! name score)
   (query-exec-safeconnection  "UPDATE clubs SET score=? WHERE name=?" score name))
 (define (club-insert! name score)
   (query-exec-safeconnection  "INSERT INTO clubs VALUES (?, ?)" name score))
-(define (club-all) (cons (query-list-safeconnection  "SELECT name FROM clubs ORDER BY score, name DESC")
-                         (query-list-safeconnection  "SELECT score FROM clubs ORDER BY score, name DESC")))
+(define (club-all) (cons (query-list-safeconnection  "SELECT name FROM clubs ORDER BY score, name ASC")
+                         (query-list-safeconnection  "SELECT score FROM clubs ORDER BY score, name ASC")))
 
 (define (club-rename! name newname)
   (query-exec-safeconnection  "UPDATE clubs SET name=? WHERE name=?" newname name)
