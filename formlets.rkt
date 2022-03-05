@@ -52,16 +52,12 @@
                       )
                      (values name)))
 
-(define get-club (formlet
-                  (div
-                   (h5 "所有社团")
-                   (button ([type "submit"] [class "btn btn-primary"]) "查询")
-                   )(values)))
+
 (define query-club (formlet
                     (div 
                      (h5 "查询社团")
                      (div ((class "form-group")) (label "社团名") ,{input-string . => . name})
-                     (button ([type "submit"] [class "btn btn-primary"]) "提交")
+                     (button ([type "submit"] [class "btn btn-primary"]) "查询")
                      )
                     (values name)
                     ))

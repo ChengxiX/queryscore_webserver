@@ -76,8 +76,6 @@
                                      (form ([action ,(embed/url call-club-rm-user)])
                                            ,@(formlet-display update-user-rm-club) )
                                      (h2 "社团")
-                                     (form ([action ,(embed/url call-get-club)])
-                                           ,@(formlet-display get-club) )
                                      (form ([action ,(embed/url call-query-club)])
                                            ,@(formlet-display query-club))
                                      (form ([action ,(embed/url call-add-club)])
@@ -104,12 +102,9 @@
                                                                               (else (let ((res (user-club name))) (table-render "用户名" "社团" (make-list (length res) name) res)))
                                                                               ))
                                                   )))))
-  (define (call-get-club request)
-    (after-auth request (lambda (request) (response/xexprh5 (base "所有社团" `((h1 "所有社团") (br)
-                                                                                       ,(let ((res (club-all))) (table-render "社团" "积分" (car res) (map number->string (cdr res))))
-                                                                                       ))))))
+
   (define (call-query-club request) (after-auth request (lambda (request) (define-values (club) (formlet-process query-club request)) (response/xexprh5 (base
-                                                                                                                                                         "社团查询结果" `((h1 "社团查询结果") (br) ,(let ((res (club-indistinct club))) (table-render "社团" "积分" res (map (lambda (name) (number->string (club-score name))) res)))))
+                                                                                                                                                         "社团查询结果" `((h1 "社团查询结果") (br) ,(if (equal? club null) (let ((res (club-all))) (table-render "社团" "积分" (car res) (map number->string (cdr res)))) (let ((res (club-indistinct club))) (table-render "社团" "积分" res (map (lambda (name) (number->string (club-score name))) res))))))
                                                                                                                                                         ))))
   (define (call-get-logs request)
     (after-auth request (lambda (request) (define-values (club) (formlet-process get-logs request))
