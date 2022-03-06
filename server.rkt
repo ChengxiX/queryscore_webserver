@@ -22,19 +22,33 @@
   (response/xexpr xexpr #:code code	#:message message	#:seconds seconds	#:mime-type mime-type	#:headers hdrs	#:cookies cooks #:preamble (bytes-append #"<!DOCTYPE html>" preamble)))
 
 
-(define (base title body)
+(define (base-page-generate embed/url title body (id #f))
+  (define clubs (if id (user-club id) null))
   `(html (head (meta ((charset "UTF-8")))
                (meta ((name "viewport") (content "width=device-width, initial-scale=1, shrink-to-fit=no")))
                (link ((rel "stylesheet") (href "https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.1/css/bootstrap.min.css")))
                (title ,(string-append title " - RDFZ社联在线系统")))
-         (body (div ((class "container")) ,@body)
+         (body (div ((class "container"))
+         (nav ((class "navbar navbar-expand-sm bg-dark navbar-dark"))
+          (a ((class "navbar-brand") (href "/")) "社联在线")
+          (ul ((class "navbar-nav"))
+          (li ((class "nav-item")) (a ((class "nav-link") (href "https://voiceme.club")) "Voiceme"))
+          ,(if id (if (not (and (member "admin" clubs) (= (length clubs) 1))) `(li ((class "nav-item")) (a ((class "nav-link")(href ,(embed/url query))) "查分")) "") "")
+          ,(if id (if (member "admin" clubs) `(li ((class "nav-item")) (a ((class "nav-link") (href ,(embed/url query))) "管理")) "") "")
+          ,(if id
+          `(li ((class "nav-item dropdown")) (a ((class "nav-link dropdown-toggle") (href "#") (id "navbardrop") (data-toggle "dropdown")) ,id)
+          (div ((class "dropdown-menu")) (a ((class "dropdown-item") (href ,(embed/url logout))) "登出"))) `(li ((class "nav-item")) (a ((class "nav-link") (href ,(embed/url login))) "登录")))
+          )
+          )
+         ,@body)
                (script ((src "https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.slim.js")))
                (script ((src "https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.1/js/bootstrap.min.js")))
                )))
 
 (define (homepage request)
-  (define (render-homepage embed/url)
-    (response/xexprh5 (base "首页" `((h1 "首页") (br) (p "欢迎使用RDFZ社联在线系统") (a ((href ,(embed/url login))) "登录")))))
+  (define (render-homepage embed/url #:alert (alert #f))
+    (response/xexprh5 (base-page-generate embed/url "首页" `(,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
+      (h1 "首页") (br) (p "欢迎使用RDFZ社联在线系统")) (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))))
   (send/suspend/dispatch render-homepage))
 
 (define secret-salt (make-secret-salt/file (build-path PATH "secret-salt.bin")))
@@ -44,22 +58,22 @@
     (define-values (username password remember?) (formlet-process login-form request))
     (match (cons username password)
       [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) (bytes->string/utf-8 realpass)) #f))
-                        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url (if (member "admin" (user-club user)) admin query))))))))
+                        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url homepage)))))))
                                                                                      #:cookies (list (make-id-cookie "identity" user #:key secret-salt #:max-age (if (equal? remember? "t") 604800 #f))))))]
       [else (login (redirect/get) #:alert '("danger" "错误的用户名或者密码" "如有需要请联系社联"))]))
   (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)))
     (if id
-        (if (member "admin" (user-club id)) (admin (redirect/get) #:alert `("success" "欢迎回来！" ,id)) (query (redirect/get)))
-        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "登录" `((h1 "登录") (br)
+        (homepage (redirect/get) #:alert `("success" "欢迎回来！" ,id))
+        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "登录" `((h1 "登录") (br)
                                                                                             ,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
                                                                                             (form ([action ,(embed/url login-handler)]) ,@(formlet-display login-form)))))))
         )))
 
 (define (admin request #:alert (alert #f))
   (define (after-auth request next) (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))) (if (if id (member "admin" (user-club id)) #f) (next request)
-                                                                                                                                        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "无权限" `((h1 "无权限") (br) (p "您不是管理员") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页")))))))))
+                                                                                                                                        (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "无权限" `((h1 "无权限") (br) (p "您不是管理员") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页")) (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))))))))
   (define (render-admin embed/url)
-    (response/xexprh5 (base "管理面板" `(
+    (response/xexprh5 (base-page-generate embed/url "管理面板" `(
                                      ,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
                                      (h1 "管理面板") (br) (a ((href ,(embed/url logout))) "登出")
                                      (h2 "用户")
@@ -90,26 +104,26 @@
                                      (form ([action ,(embed/url add-log-change-call)])
                                            ,@(formlet-display add-log-change) )
                                      (form ([action ,(embed/url call-get-logs)])
-                                           ,@(formlet-display get-logs) )))
+                                           ,@(formlet-display get-logs) )) (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))
                       ))
   (define (call-get-user request)
     (after-auth request (lambda (request) (define-values (name club) (formlet-process get-user request))
-                          (response/xexprh5 (base "查询用户结果" `((h1 "查询用户结果") (br)
+                          (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "查询用户结果" `((h1 "查询用户结果") (br)
                                                                            ,(cond 
                                                                               ((and (equal? club "") (equal? name "")) (let ((res (user-get-all))) (table-render "用户名" "社团" (car res) (cdr res))))
                                                                               ((equal? club "") (let ((res (user-get-indistinct name))) (table-render "用户名" "社团" (car res) (cdr res))))
                                                                               ((equal? name "") (let ((res (club-user club))) (table-render "社团" "用户名" (make-list (length res) club) res)))
                                                                               (else (let ((res (user-club name))) (table-render "用户名" "社团" (make-list (length res) name) res)))
                                                                               ))
-                                                  )))))
+                                                  (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))))))))
 
-  (define (call-query-club request) (after-auth request (lambda (request) (define-values (club) (formlet-process query-club request)) (response/xexprh5 (base
-                                                                                                                                                         "社团查询结果" `((h1 "社团查询结果") (br) ,(if (equal? club null) (let ((res (club-all))) (table-render "社团" "积分" (car res) (map number->string (cdr res)))) (let ((res (club-indistinct club))) (table-render "社团" "积分" res (map (lambda (name) (number->string (club-score name))) res))))))
-                                                                                                                                                        ))))
+  (define (call-query-club request) (after-auth request (lambda (request) (define-values (club) (formlet-process query-club request)) (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url
+                                                                                                                                                         "社团查询结果" `((h1 "社团查询结果") (br) ,(if (equal? club null) (let ((res (club-all))) (table-render "社团" "积分" (car res) (map number->string (cdr res)))) (let ((res (club-indistinct club))) (table-render "社团" "积分" res (map (lambda (name) (number->string (club-score name))) res))))) (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))
+                                                                                                                                                        ))))))
   (define (call-get-logs request)
     (after-auth request (lambda (request) (define-values (club) (formlet-process get-logs request))
-                          (response/xexprh5 (base "查询积分记录结果" `((h1 "查询积分记录结果") (br)
-                                                                               ,(let ((res (log-*-byclub club))) (table-render-4 "社团" "备注" "积分" "记录时间" (first res) (second res) (map number->string (third res)) (fourth res)))))))))
+                          (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "查询积分记录结果" `((h1 "查询积分记录结果") (br)
+                                                                               ,(let ((res (log-*-byclub club))) (table-render-4 "社团" "备注" "积分" "记录时间" (first res) (second res) (map number->string (third res)) (fourth res)))) (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))))))))
   (define (call-add-user request)
     (after-auth request (lambda (request) (define-values (name password club) (formlet-process add-user request))
                           (if (or (equal? name "") (equal? password ""))
@@ -177,9 +191,10 @@
 (define (table-render-4 title1 title2 title3 title4 cell1 cell2 cell3 cell4) `(table ((class "table table-striped table-bordered table-hover table-condensed")) (thead (tr (th ,title1) (th ,title2) (th ,title3) (th ,title4))) (tbody ,@(map (lambda (a b c d) `(tr(td ,a) (td ,b) (td ,c) (td ,d))) cell1 cell2 cell3 cell4))))
 
 (define (query request)
-  (define club-list (user-club (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)))
+  (define id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))
+  (define club-list (if id (user-club id) #f))
   (define (render-query embed/url)
-    (response/xexprh5 (base "社团详情" `((h1 "社团详情") (br) (a ((href ,(embed/url logout))) "登出") (ul ((class "nav nav-tabs") (role "tablist")) (li ((class "nav-item")) (a ((class "nav-link active") (data-toggle "tab") (href "#main")) "总览"))
+    (response/xexprh5 (base-page-generate embed/url "社团详情" `((h1 "社团详情") (br) (a ((href ,(embed/url logout))) "登出") (ul ((class "nav nav-tabs") (role "tablist")) (li ((class "nav-item")) (a ((class "nav-link active") (data-toggle "tab") (href "#main")) "总览"))
                                                                                                 ,@(map (lambda (club) `(li ((class "nav-item")) (a ((class "nav-link") (data-toggle "tab") (href ,(string-append "#" club))) ,club))) club-list)
                                                                                                 )
                                                  (div ((class "tab-content"))
@@ -190,11 +205,18 @@
                                                       )
                                                  )
                             )))
-  (if (equal? club-list null) (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base "社团详情" `((h1 "社团详情") (br) (p "您不在任何社团里，如有疑问请练习社联") (a ((href ,(embed/url logout))) "登出")))))) (send/suspend/dispatch render-query)))
+  (cond ((equal? id #f) (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "未登录" `((h1 "未登录") (br) (p "您还未登录") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页")))))))
+        ((equal? club-list null) (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "社团详情" `((h1 "社团详情") (br) (p "您不在任何社团里，如有疑问请联系社联") (a ((href ,(embed/url logout))) "登出")))))))
+        (else (send/suspend/dispatch render-query))))
 
 (define (logout request)
   (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url homepage))))))) #:cookies (list (logout-id-cookie "identity"))))))
 
-;run
+(define (embed-parameter embed/url func . args)
+  (define (p) (apply func args))
+  (embed/url p))
 
+
+
+;run
 (serve/servlet homepage #:command-line? #t #:servlet-path "/" #:port 8080 #:listen-ip #f)
