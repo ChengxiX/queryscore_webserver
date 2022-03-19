@@ -15,8 +15,7 @@
 ;(query-exec-safeconnection db "CREATE TABLE user2club(user VARCHAR(64), club VARCHAR(64), FOREIGN KEY(user) REFERENCES users(name), FOREIGN KEY(club) REFERENCES clubs(name), PRIMARY KEY (user, club))"))
 ;db)
 
-(define pool (connection-pool (lambda () (mysql-connect #:user "cu" 
-                                                        ;#:password "j6ChJLUK0F*XCC&&h" #:port 8806 
+(define pool (connection-pool (lambda () (mysql-connect #:user "cu"
                                                         #:password "myweb"
                                                         #:database "clubunion" #:ssl 'yes)) #:max-idle-connections 3))
 
