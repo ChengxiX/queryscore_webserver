@@ -27,10 +27,10 @@
   `(html (head (meta ((charset "UTF-8")))
                (meta ((name "viewport") (content "width=device-width, initial-scale=1, shrink-to-fit=no")))
                (link ((rel "stylesheet") (href "https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.1/css/bootstrap.min.css")))
-               (title ,(string-append title " - RDFZ社联在线系统")))
+               (title ,(string-append title " - 在线查分系统")))
          (body (div ((class "container"))
          (nav ((class "navbar navbar-expand-sm bg-dark navbar-dark"))
-          (a ((class "navbar-brand") (href "/")) "社联在线")
+          (a ((class "navbar-brand") (href "/")) "在线查分系统")
           (ul ((class "navbar-nav"))
           (li ((class "nav-item")) (a ((class "nav-link") (href "https://voiceme.club")) "Voiceme"))
           ,(if id (if (not (and (member "admin" clubs) (= (length clubs) 1))) `(li ((class "nav-item")) (a ((class "nav-link")(href ,(embed/url query))) "查分")) "") "")
@@ -48,7 +48,7 @@
 (define (homepage request)
   (define (render-homepage embed/url #:alert (alert #f))
     (response/xexprh5 (base-page-generate embed/url "首页" `(,(if alert `(div ((class ,(format "alert alert-~a alert-dismissible fade show" (first alert)))) (botton ((type "button") (class "close") (data-dismiss "alert")) times) (strong ,(second alert)) ,(third alert)) "")
-      (h1 "首页") (br) (p "欢迎使用RDFZ社联在线系统")) (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))))
+      (h1 "首页") (br) (p "欢迎使用在线查分系统")) (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800))))
   (send/suspend/dispatch render-homepage))
 
 (define secret-salt (make-secret-salt/file (build-path PATH "secret-salt.bin")))
@@ -60,7 +60,7 @@
       [(cons user pass) #:when (let ((realpass (user-password user))) (if realpass (pwhash-verify #f (string->bytes/utf-8 pass) (bytes->string/utf-8 realpass)) #f))
                         (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 `(html (head (meta ((http-equiv "refresh") (content ,(string-append "0;url=" (embed/url homepage)))))))
                                                                                      #:cookies (list (make-id-cookie "identity" user #:key secret-salt #:max-age (if (equal? remember? "t") 604800 #f))))))]
-      [else (login (redirect/get) #:alert '("danger" "错误的用户名或者密码" "如有需要请联系社联"))]))
+      [else (login (redirect/get) #:alert '("danger" "错误的用户名或者密码" "如有需要请联系"))]))
   (let ((id (request-id-cookie request #:name "identity" #:key secret-salt #:shelf-life 604800)))
     (if id
         (homepage (redirect/get) #:alert `("success" "欢迎回来！" ,id))
@@ -206,7 +206,7 @@
                                                  )
                             )))
   (cond ((equal? id #f) (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "未登录" `((h1 "未登录") (br) (p "您还未登录") (a ((href ,(embed/url login))) "登录") (a ((href ,(embed/url homepage))) "首页")))))))
-        ((equal? club-list null) (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "社团详情" `((h1 "社团详情") (br) (p "您不在任何社团里，如有疑问请联系社联") (a ((href ,(embed/url logout))) "登出")))))))
+        ((equal? club-list null) (send/suspend/dispatch (lambda (embed/url) (response/xexprh5 (base-page-generate embed/url "社团详情" `((h1 "社团详情") (br) (p "您不在任何社团里，如有疑问请联系") (a ((href ,(embed/url logout))) "登出")))))))
         (else (send/suspend/dispatch render-query))))
 
 (define (logout request)
